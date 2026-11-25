@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OkiQ — صفحة النشاط</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--g1:#3B82F6;--g2:#2563EB;--g3:#1D4ED8;--gold:#E3B75A;--ink:#13312A;--muted:#5d6f69;--bg:#F2F7F5}
+  *{box-sizing:border-box;margin:0}
+  body{font-family:Tajawal,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+  .hero{background:linear-gradient(150deg,var(--g1),var(--g2) 55%,var(--g3));color:#fff;padding:36px 20px 70px;text-align:center}
+  .logo{width:64px;height:64px;margin-bottom:10px}
+  .type{opacity:.85;font-size:15px}
+  h1{font-size:28px;font-weight:800;margin:6px 0}
+  .card{background:#fff;border-radius:22px;margin:-46px 16px 16px;padding:20px;box-shadow:0 10px 30px #0f172a14}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #E5EBEA;font-size:15px}
+  .row:last-child{border:0}.row b{color:var(--muted);font-weight:500;white-space:nowrap}
+  .btn{display:block;text-align:center;text-decoration:none;font-weight:800;font-size:17px;padding:16px;border-radius:16px;margin:10px 16px}
+  .main{background:var(--g2);color:#fff}.sec{background:#fff;color:var(--g2);border:2px solid #cddcfa}
+  .note{text-align:center;color:var(--muted);font-size:13px;margin:16px 24px 30px;line-height:1.7}
+  .err{padding:60px 20px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="app"><div class="err">جارٍ التحميل...</div></div>
+<script>
+const API = 'https://midad-api.mostafa1muhamd2jasm333333.workers.dev';
+const id = new URLSearchParams(location.search).get('id') || '';
+const esc = s => String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const logo = '<img class="logo" src="../img/logo.svg" alt="OkiQ" style="background:#fff;border-radius:18px;padding:8px">';
+async function load() {
+  const app = document.getElementById('app');
+  if (!/^[A-Za-z0-9_-]{8,40}$/.test(id)) { app.innerHTML = '<div class="err">الرابط غير صحيح.</div>'; return; }
+  try {
+    const r = await fetch(API + '/public/' + id);
+    if (!r.ok) throw 0;
+    const p = await r.json();
+    document.title = p.name + ' — OkiQ';
+    const type = {clinic:'عيادة', generator:'مولّدة', store:'متجر'}[p.type] || '';
+    const place = [p.province, p.area].filter(Boolean).join(' - ');
+    const rows = [['الاختصاص', p.specialty], ['المنطقة', place], ['العنوان', p.address], ['أوقات الدوام', p.hours], ['الهاتف', p.phone]]
+      .filter(x => x[1]).map(x => `<div class="row"><b>${x[0]}</b><span>${esc(x[1])}</span></div>`).join('');
+    const dir = p.lat != null ? `<a class="btn sec" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}">الاتجاهات إلى ${esc(type || 'المكان')}</a>` : '';
+    const tel = p.phone ? `<a class="btn sec" href="tel:${esc(p.phone)}">اتصال</a>` : '';
+    app.innerHTML = `<div class="hero">${logo}<div class="type">${esc(type)}</div><h1>${esc(p.name)}</h1></div>
+      ${rows ? `<div class="card">${rows}</div>` : '<div style="height:20px"></div>'}
+      <a class="btn main" href="midad://p/${id}">${p.acceptRequests ? 'احجز موعداً عبر تطبيق OkiQ' : 'افتح في تطبيق OkiQ'}</a>
+      ${dir}${tel}
+      <a class="btn sec" href="https://okiqapp.github.io/index.html">تحميل تطبيق OkiQ</a>
+      <p class="note">إذا لم يفتح التطبيق، حمّله أولاً ثم ارجع لهذه الصفحة واضغط الزر مرة أخرى.</p>`;
+  } catch { app.innerHTML = '<div class="err">تعذّر تحميل الصفحة. تأكد من الإنترنت وحاول مجدداً.</div>'; }
+}
+load();
+</script>
+</body>
+</html>
